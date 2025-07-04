@@ -4,9 +4,10 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# For both local (.env) and Streamlit Cloud (secrets)
+api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=api_key)
 
-client = openai.OpenAI()
 
 # Initialize chat history in session
 if "messages" not in st.session_state:
