@@ -3,42 +3,63 @@ import openai
 import os
 from dotenv import load_dotenv
 
+# Load .env for local or Streamlit Cloud secrets
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=api_key)
 
-client = openai.OpenAI()
+# Page setup
+st.set_page_config(page_title="💬 Chat with AI", layout="centered")
+st.title("🤖 OpenAI Chatbot")
+st.caption("Smart, simple, and conversational.")
 
-# Initialize chat history in session
+# Sidebar - Model selection
+with st.sidebar:
+    st.header("⚙️ Settings")
+    model_choice = st.selectbox(
+        "Model",
+        options=["gpt-3.5-turbo", "gpt-4"],
+        index=0,
+        help="GPT-4 is smarter but slower and more expensive."
+    )
+    if st.button("🔁 Reset Conversation"):
+        st.session_state.messages = [
+            {"role": "system", "content": "You are a helpful assistant."}
+        ]
+        st.experimental_rerun()
+
+# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": "You are a helpful assistant."}
     ]
 
-st.title("🤖 Roma R Chatbot")
-st.markdown("Type your message and press Enter. Type `bye` to end the chat.")
-
-user_input = st.chat_input("You:")
-
-if user_input:
-    if user_input.lower() == "bye":
-        st.write("👋 Goodbye!")
-    else:
-        # Append user message
-        st.session_state.messages.append({"role": "user", "content": user_input})
-
-        # Call OpenAI API
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=st.session_state.messages
-            )
-            reply = response.choices[0].message.content
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-        except Exception as e:
-            reply = f"❌ Error: {str(e)}"
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-
 # Show chat history
-for msg in st.session_state.messages[1:]:  # skip the system message
+for msg in st.session_state.messages[1:]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
+
+# User input
+user_input = st.chat_input("Type your message...")
+
+# Handle user message
+if user_input:
+    # Show user message
+    st.chat_message("user").markdown(user_input)
+    st.session_state.messages.append({"role": "user", "content": user_input})
+
+    # Get assistant response
+    with st.chat_message("assistant"):
+        with st.spinner("🤖 Thinking..."):
+            try:
+                response = client.chat.completions.create(
+                    model=model_choice,
+                    messages=st.session_state.messages
+                )
+                reply = response.choices[0].message.content
+            except Exception as e:
+                reply = f"⚠️ Error: {str(e)}"
+            st.markdown(reply)
+
+    # Save assistant message
+    st.session_state.messages.append({"role": "assistant", "content": reply})
