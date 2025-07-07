@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 # Load .env for local or Streamlit Cloud secrets
 load_dotenv()
+# For both local (.env) and Streamlit Cloud (secrets)
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
 client = openai.OpenAI(api_key=api_key)
 
@@ -12,6 +13,7 @@ client = openai.OpenAI(api_key=api_key)
 st.set_page_config(page_title="💬 Chat with AI", layout="centered")
 st.title("🤖 OpenAI Chatbot")
 st.caption("Smart, simple, and conversational.")
+
 
 # Sidebar - Model selection
 with st.sidebar:
